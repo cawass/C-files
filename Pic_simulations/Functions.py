@@ -18,7 +18,7 @@ def Acceleration_calculation(Nitrogen_distribution, Electric_field_matrix, lapla
     print(Nitrogen_distribution.density)
     
     laplacian_matrix_X = Gauss_Seidel(laplacian_matrix_x, mesh_separation, Nitrogen_distribution.density, mesh_size)
-    laplacian_matrix_Y = Gauss_Seidel(laplacian_matrix_y, mesh_separation, Nitrogen_distribution.density, mesh_size)*0
+    laplacian_matrix_Y = Gauss_Seidel(laplacian_matrix_y, mesh_separation, np.transpose(Nitrogen_distribution.density), mesh_size)
     
     # Debug prints for checking Laplacian matrices
     print(np.max(laplacian_matrix_X))
@@ -29,7 +29,7 @@ def Acceleration_calculation(Nitrogen_distribution, Electric_field_matrix, lapla
     
     for j in range(1, mesh_size - 1):
         for k in range(1, mesh_size - 1):
-            E_field_matrix_X[j, k] = -(laplacian_matrix_X[j+1, k] - laplacian_matrix_X[j-1, k]) / (2 * mesh_separation)
+            E_field_matrix_X[j, k] = -(laplacian_matrix_X[k, j+1] - laplacian_matrix_X[k, j-1]) / (2 * mesh_separation)
             E_field_matrix_Y[j, k] = -(laplacian_matrix_Y[j, k+1] - laplacian_matrix_Y[j, k-1]) / (2 * mesh_separation)
    
     E_field_particle_X = np.zeros(Nitrogen_distribution.N_particles)
@@ -49,7 +49,7 @@ def Acceleration_calculation(Nitrogen_distribution, Electric_field_matrix, lapla
 
         # Correct sign in the acceleration calculation
         Nitrogen_distribution.AX[j] = -E_field_particle_X[j] * (Nitrogen_distribution.charge[j]) / (Nitrogen_distribution.mass[j] * Epsilon_0)
-        Nitrogen_distribution.AY[j] = E_field_particle_Y[j] * (Nitrogen_distribution.charge[j]) / (Nitrogen_distribution.mass[j] * Epsilon_0)
+        Nitrogen_distribution.AY[j] = -E_field_particle_Y[j] * (Nitrogen_distribution.charge[j]) / (Nitrogen_distribution.mass[j] * Epsilon_0)
 
     #plt.plot(E_field_matrix_X)
     plt.show()
