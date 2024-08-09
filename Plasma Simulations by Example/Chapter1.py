@@ -99,3 +99,7 @@ def Gauss_Seidel_Relaxation(phi, Delta_x, b, w):
     for j in range(Delta_x[:]):
         g = (phi[j-1]+ phi[j+1]-Delta_x*Delta_x*b[j])/2
         phi[j] = phi[j] + w*(g- phi[j])
+
+#LeapFrog-method
+def Leap_Frog(x_0, v_actual, v_step, delta_t):
+    return x_0+(v_actual+v_step)/2*delta_t

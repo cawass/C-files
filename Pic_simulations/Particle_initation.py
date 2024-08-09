@@ -29,18 +29,7 @@ class Particle_distribution:
             self.VY[i] = VY
             self.AX[i] = AX
             self.AY[i] = AY
-        """
-        clear = True
-        while clear:
-            clear = False
-            print("Checking spacing")
-            for i in range(N_particles):
-                for j in range(N_particles):
-                    if ((self.X[i]-self.X[j])**2+(self.Y[i]-self.Y[j])**2)**(1/2)<0.3 and i != j:
-                        self.X[i] = X+np.random.normal(0, sigma)
-                        self.Y[i] = Y+np.random.normal(0, sigma)
-                        print(((self.X[i]-self.X[j])**2+(self.Y[i]-self.Y[j])**2)**(1/2))
-                        clear = True"""
+
     def Multiple_molecules(self, molecule_1_distribution, molecule_2_distribution):
         for i in range(molecule_1_distribution.N_particles):
 #            self.atom.name[i] = molecule_1_distribution.atom.name[i]
@@ -69,44 +58,6 @@ class Particle_distribution:
         plt.yscale = 3*self.sigma
         plt.show() 
 
-    """
-    def calculate_density(self):
-        # Create meshgrid arrays
-        x = np.linspace(0, self.Meshgrid.mesh_size * self.Meshgrid.mesh_separation, self.Meshgrid.mesh_size)
-        y = np.linspace(0, self.Meshgrid.mesh_size * self.Meshgrid.mesh_separation, self.Meshgrid.mesh_size)
-        xx, yy = np.meshgrid(x, y)
-        
-        # Flatten the meshgrid arrays
-        grid_coords = np.vstack([xx.ravel(), yy.ravel()])
-        
-        # Stack the particle positions
-        positions = np.vstack([self.X, self.Y])
-        
-        # Separate positive and negative charges
-        positive_mask = self.charge > 0
-        negative_mask = self.charge < 0
-        
-        # Perform kernel density estimation for positive and negative charges separately
-        if np.any(positive_mask):
-            kde_positive = gaussian_kde(positions[:, positive_mask], weights=self.charge[positive_mask])
-            charge_density_positive = kde_positive(grid_coords).reshape(self.Meshgrid.mesh_size, self.Meshgrid.mesh_size)
-        else:
-            charge_density_positive = np.zeros((self.Meshgrid.mesh_size, self.Meshgrid.mesh_size))
-        
-        if np.any(negative_mask):
-            kde_negative = gaussian_kde(positions[:, negative_mask], weights=-self.charge[negative_mask])
-            charge_density_negative = kde_negative(grid_coords).reshape(self.Meshgrid.mesh_size, self.Meshgrid.mesh_size)
-        else:
-            charge_density_negative = np.zeros((self.Meshgrid.mesh_size, self.Meshgrid.mesh_size))
-        
-        # Combine positive and negative charge densities
-        self.density = charge_density_positive - charge_density_negative
-        
-        print("Charge density:")
-        print(self.density)
-        print("Maximum density:", np.max(self.density))
-        print("Minimum density:", np.min(self.density))
-    """
     def calculate_density(self):
         # Define the meshgrid dimensions and spacing
         mesh_size = self.Meshgrid.mesh_size

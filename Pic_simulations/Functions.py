@@ -3,6 +3,8 @@ import scipy as sp
 import matplotlib.pyplot as plt
 from mpl_toolkits import mplot3d
 from matplotlib.animation import FuncAnimation
+import pygame 
+
 Epsilon_0 =8.8541878128* 10**(-12) #F/m
 
 def Gauss_Seidel(phi, Delta_x, b, mesh_size):
@@ -12,7 +14,7 @@ def Gauss_Seidel(phi, Delta_x, b, mesh_size):
                 phi[j, k] = 0.25 * (phi[j-1, k] + phi[j+1, k] + phi[j, k-1] + phi[j, k+1] - Delta_x**2 * b[j, k])
     return phi
 
-def Acceleration_calculation(Nitrogen_distribution, Electric_field_matrix, laplacian_matrix_x, laplacian_matrix_y):
+def Acceleration_calculation(Nitrogen_distribution, Electric_field_matrix, laplacian_matrix_x, laplacian_matrix_y, E_field):
     mesh_size = Nitrogen_distribution.Meshgrid.mesh_size
     mesh_separation = Nitrogen_distribution.Meshgrid.mesh_separation
     print(Nitrogen_distribution.density)
@@ -29,8 +31,8 @@ def Acceleration_calculation(Nitrogen_distribution, Electric_field_matrix, lapla
     
     for j in range(1, mesh_size - 1):
         for k in range(1, mesh_size - 1):
-            E_field_matrix_X[j, k] = -(laplacian_matrix_X[k, j+1] - laplacian_matrix_X[k, j-1]) / (2 * mesh_separation)
-            E_field_matrix_Y[j, k] = -(laplacian_matrix_Y[j, k+1] - laplacian_matrix_Y[j, k-1]) / (2 * mesh_separation)
+            E_field_matrix_X[j, k] = -(laplacian_matrix_X[k, j+1] - laplacian_matrix_X[k, j-1]) / (2 * mesh_separation)+ E_field[0]
+            E_field_matrix_Y[j, k] = -(laplacian_matrix_Y[j, k+1] - laplacian_matrix_Y[j, k-1]) / (2 * mesh_separation)+ E_field[1]
    
     E_field_particle_X = np.zeros(Nitrogen_distribution.N_particles)
     E_field_particle_Y = np.zeros(Nitrogen_distribution.N_particles)
@@ -88,7 +90,8 @@ def Forward_step_function(Nitrogen_distribution, time_step):
     Nitrogen_distribution.Y += time_step * Nitrogen_distribution.VY
     Nitrogen_distribution.X += time_step * Nitrogen_distribution.VX
     return Nitrogen_distribution
-def simulate(Nitrogen_distribution, Potential_field_matrix, Electric_field_matrix, Time_step, N_iterations, Num_particles):
+
+def simulate(Nitrogen_distribution, Potential_field_matrix, Electric_field_matrix, Time_step, N_iterations, Num_particles, E_field, screen, clock, mesh_size, mesh_separation, num_particle_1, num_particle_2):
     Sim_position_X = []
     Sim_position_Y = []
     Sim_temperature = []
@@ -97,62 +100,66 @@ def simulate(Nitrogen_distribution, Potential_field_matrix, Electric_field_matri
 
     laplacian_matrix_x = np.zeros([Nitrogen_distribution.Meshgrid.mesh_size, Nitrogen_distribution.Meshgrid.mesh_size])
     laplacian_matrix_y = np.zeros([Nitrogen_distribution.Meshgrid.mesh_size, Nitrogen_distribution.Meshgrid.mesh_size])
+
     for i in range(N_iterations):
         print(f"Iteration {i+1}/{N_iterations}")
         Nitrogen_distribution.calculate_density()
         Nitrogen_distribution.Temperature_Velocity_Calc()
-        
+
         # Calculate the acceleration and electric field matrix
-        Nitrogen_distribution, laplacian_matrix_x, laplacian_matrix_y = Acceleration_calculation(Nitrogen_distribution, Electric_field_matrix, laplacian_matrix_x, laplacian_matrix_y)
+        Nitrogen_distribution, laplacian_matrix_x, laplacian_matrix_y = Acceleration_calculation(Nitrogen_distribution, Electric_field_matrix, laplacian_matrix_x, laplacian_matrix_y, E_field)
+
         # Update the positions of the particles
         Nitrogen_distribution = Forward_step_function(Nitrogen_distribution, Time_step)
-        
-        # Print the maximum x-coordinate of the particles
-        print(f"Max X: {max(Nitrogen_distribution.X)}, Max Y: {max(Nitrogen_distribution.Y)}" )
-        print(f"Max VX: {max(Nitrogen_distribution.VX)}, Max VY: {max(Nitrogen_distribution.VY)} Temperature: {np.average(Nitrogen_distribution.temperature)}," )
-        
+
         # Append the current positions to Sim_position
         Sim_position_X.append(Nitrogen_distribution.X.copy())
         Sim_position_Y.append(Nitrogen_distribution.Y.copy())
         Sim_temperature.append(Nitrogen_distribution.temperature.copy())
-        # Recalculate the density
+
+        # Update Pygame screen
+        update_pygame_screen(screen, Nitrogen_distribution, mesh_size, mesh_separation, num_particle_1, num_particle_2)
+
+        # Print the maximum x-coordinate of the particles
+        print(f"Max X: {max(Nitrogen_distribution.X)}, Max Y: {max(Nitrogen_distribution.Y)}")
+        print(f"Max VX: {max(Nitrogen_distribution.VX)}, Max VY: {max(Nitrogen_distribution.VY)} Temperature: {np.average(Nitrogen_distribution.temperature)},")
+
+        # Control the simulation speed
+        clock.tick(30)  # Adjust the value to control the speed of the simulation
+
     return Nitrogen_distribution, Sim_position_X, Sim_position_Y, Sim_temperature
 
-def animate_particles(Nitrogen_distribution, Sim_position_X, Sim_position_Y, Sim_temperature, N_iterations, mesh_size, mesh_separation, num_particle_1, num_particle_2):
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 6))
+import pygame
 
-    X_axis = np.linspace(0, mesh_size * mesh_separation, mesh_size)
-    Y_axis = np.linspace(0, mesh_size * mesh_separation, mesh_size)
-    X, Y = np.meshgrid(X_axis, Y_axis)
+def update_pygame_screen(screen, Nitrogen_distribution, mesh_size, mesh_separation, num_particle_1, num_particle_2):
+    screen.fill((0, 0, 0))  # Clear screen
+
+    # Scaling factor for visualization
+    scale = 720 / (mesh_size * mesh_separation)
+
+    # Draw density plot
+    density = Nitrogen_distribution.density
+    max_density = np.max(density)
+    min_density = np.min(density)
+
+    for i in range(mesh_size):
+        for j in range(mesh_size):
+            color_intensity = int(255 * (density[i, j] - min_density) / (max_density - min_density))
+            color = (color_intensity, color_intensity, 255 - color_intensity)
+            pygame.draw.rect(screen, color, pygame.Rect(int(j * scale), int(i * scale), int(scale), int(scale)))
+
+    # Draw particles
+    for idx in range(num_particle_1):
+        x = int(Nitrogen_distribution.X[idx] * scale)
+        y = int(Nitrogen_distribution.Y[idx] * scale)
+        if 0 <= x < screen.get_width() and 0 <= y < screen.get_height():
+            pygame.draw.circle(screen, (0, 0, 255), (x, y), 2)
     
-    def update(frame):
-        ax1.clear()
-        ax2.clear()
-        
-        Nitrogen_distribution.X = Sim_position_X[frame]
-        Nitrogen_distribution.Y = Sim_position_Y[frame]
-        
-        if frame % 2 == 0:
-            Nitrogen_distribution.calculate_density()
+    for idx in range(num_particle_1, num_particle_2 + num_particle_1):
+        x = int(Nitrogen_distribution.X[idx] * scale)
+        y = int(Nitrogen_distribution.Y[idx] * scale)
+        if 0 <= x < screen.get_width() and 0 <= y < screen.get_height():
+            pygame.draw.circle(screen, (255, 0, 0), (x, y), 2)
 
-        # Update particle position plot
-        ax1.contourf(X_axis, Y_axis, Nitrogen_distribution.density, 20, cmap='viridis')
-
-        # Plot particles if Particle_plot is True
-        ax1.scatter(Nitrogen_distribution.X[0:num_particle_1], Nitrogen_distribution.Y[0:num_particle_1], marker=".", color = "blue")
-        ax1.scatter(Nitrogen_distribution.X[num_particle_1:num_particle_2+num_particle_1], Nitrogen_distribution.Y[num_particle_1:num_particle_2+num_particle_1], marker=".", color = "red")
-        ax1.scatter(Nitrogen_distribution.X_0, Nitrogen_distribution.Y_0, marker="o")
-        ax1.set_title(f"Iteration {frame + 1}/{N_iterations}")
-
-        # Update temperature plot
-        avg_temp = [np.mean(temp) for temp in Sim_temperature[:frame+1]]
-        ax2.plot(avg_temp, color='blue')
-        ax2.set_xlim(0, N_iterations)
-        ax2.set_ylim(0, max(avg_temp) * 1.1)
-        ax2.set_title("Average Particle Temperature")
-        ax2.set_xlabel("Iteration")
-        ax2.set_ylabel("Temperature (K)")
-        
-        return ax1, ax2
-    ani = FuncAnimation(fig, update, frames=N_iterations, interval=10, blit=False)
-    plt.show()
+    # Update the display
+    pygame.display.flip()
