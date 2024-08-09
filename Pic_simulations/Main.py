@@ -8,67 +8,107 @@ from Mesh_grid_initiation import PDE_matrix
 from Particle_initation import Particle_distribution
 import Functions
 
-#Simulation position parameters
-Mesh_grid_size = 50
-Mesh_distace = 1.38*10**(-6)
+# Class to store all simulation parameters
+class SimulationParameters:
+    def __init__(self):
+        # Simulation position parameters
+        self.Mesh_grid_size = 50
+        self.Mesh_distance = 1.38 * 10**(-7)
 
-#Simulation time parameters
-Time_step = 1*10**(-9)
-N_iterations = 1000
+        # Simulation time parameters
+        self.Time_step = 1 * 10**(-9)
+        self.N_iterations = 1000
 
-Particle_matrix = PDE_matrix(Mesh_grid_size, Mesh_distace,[0 ,0, 0])
-Potential_field_matrix = PDE_matrix(Mesh_grid_size, Mesh_distace, [1, -2, 1])
-Electric_field_matrix = PDE_matrix(Mesh_grid_size, Mesh_distace, [-1, 0 ,1])
+        # Matrices for particle distribution and fields
+        self.Particle_matrix = PDE_matrix(self.Mesh_grid_size, self.Mesh_distance, [0, 0, 0])
+        self.Potential_field_matrix = PDE_matrix(self.Mesh_grid_size, self.Mesh_distance, [1, -2, 1])
+        self.Electric_field_matrix = PDE_matrix(self.Mesh_grid_size, self.Mesh_distance, [-1, 0, 1])
 
-#initial conditions for dual particle simulation
-#molecule 1
-Type_1 = Nitrogen_pos
-Num_particles_1  =  1000
-Particle_sigma_1 = 1
-Particle_pos_0_1 = [0.3*Mesh_grid_size*Mesh_distace, 0.5*Mesh_grid_size*Mesh_distace]
-Particle_vel_0_1 = [100, 0]
-Particle_acc_0_1 = [0, 0]
+        # Initial conditions for molecule 1
+        self.Type_1 = Nitrogen_pos
+        self.Num_particles_1 = 10
+        self.Particle_sigma_1 = 0.5
+        self.Particle_pos_0_1 = [0.2 * self.Mesh_grid_size * self.Mesh_distance, 0.5 * self.Mesh_grid_size * self.Mesh_distance]
+        self.Particle_vel_0_1 = [100, 100]
+        self.Particle_acc_0_1 = [0, 0]
+        self.Particle_inject_0_1 = 1
 
-#molecule 2
-Type_2 = Nitrogen_pos
-Num_particles_2  =  1000
-Particle_sigma_2 = 1
-Particle_pos_0_2 = [0.6*Mesh_distace*Mesh_grid_size, 0.5*Mesh_distace*Mesh_grid_size]
-Particle_vel_0_2 = [-100, 0]
-Particle_acc_0_2 = [0, 0]
+        # Initial conditions for molecule 2
+        self.Type_2 = Nitrogen_neg
+        self.Num_particles_2 = 10
+        self.Particle_sigma_2 = 0.5
+        self.Particle_pos_0_2 = [0.7 * self.Mesh_distance * self.Mesh_grid_size, 0.5 * self.Mesh_distance * self.Mesh_grid_size]
+        self.Particle_vel_0_2 = [-100, -100]
+        self.Particle_acc_0_2 = [0, 0]
+        self.Particle_inject_0_2 = 1
+        # Physical parameters
+        self.Multiplication_factor = 3.125 * 10**15
 
-#Physical parameters
-Multiplication_factor = 3.125*10**15
+        # Initial electric field
+        self.E_initial = [1*10**(-8) , 0]
 
-#Initial fields
-E_initial = [1*10**(-7), 0]
+        # Loop variables
+        self.Sim_position = []
 
-#Loop variables 
-Sim_position = []
+        
 
-pygame.init()
+def main():
+    # Initialize the simulation parameters
+    sim_params = SimulationParameters()
 
-screen = pygame.display.set_mode((1280,720))
+    # Initialize Pygame
+    pygame.init()
+    screen = pygame.display.set_mode((900, 900))
+    clock = pygame.time.Clock()
 
-clock = pygame.time.Clock()
+    while True:
+        # Process player inputs.
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                raise SystemExit
 
-while True:
-    # Process player inputs.
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            pygame.quit()
-            raise SystemExitx
+        # Initialize particle distributions for molecule 1 and molecule 2
+        molecule_1_distribution = Particle_distribution(
+            sim_params.Type_1, sim_params.Num_particles_1,
+            sim_params.Particle_pos_0_1[0], sim_params.Particle_pos_0_1[1],
+            sim_params.Particle_vel_0_1[0], sim_params.Particle_vel_0_1[1],
+            sim_params.Particle_acc_0_1[0], sim_params.Particle_acc_0_1[1],
+            sim_params.Particle_sigma_1, sim_params.Particle_matrix, sim_params.Multiplication_factor
+        )
 
-    molecule_1_distribution= Particle_distribution(Type_1, Num_particles_1, Particle_pos_0_1[0], Particle_pos_0_1[1], Particle_vel_0_1[0], Particle_vel_0_1[1], Particle_acc_0_1[0], Particle_acc_0_1[1], Particle_sigma_1, Particle_matrix, Multiplication_factor)
-    molecule_2_distribution= Particle_distribution(Type_2, Num_particles_2, Particle_pos_0_2[0], Particle_pos_0_2[1], Particle_vel_0_2[0], Particle_vel_0_2[1], Particle_acc_0_2[0], Particle_acc_0_2[1], Particle_sigma_2, Particle_matrix, Multiplication_factor)
-    molecule_combined = Particle_distribution(Type_1, Num_particles_1+Num_particles_2, Particle_pos_0_2[0], Particle_pos_0_2[1], Particle_vel_0_2[0], Particle_vel_0_2[1], Particle_acc_0_2[0], Particle_acc_0_2[1], Particle_sigma_2, Particle_matrix, Multiplication_factor)
-    molecule_combined.Multiple_molecules(molecule_1_distribution, molecule_2_distribution)
-    molecule_combined.calculate_density()
-    molecule_combined.plot_density(True, Num_particles_1, Num_particles_2)
+        molecule_2_distribution = Particle_distribution(
+            sim_params.Type_2, sim_params.Num_particles_2,
+            sim_params.Particle_pos_0_2[0], sim_params.Particle_pos_0_2[1],
+            sim_params.Particle_vel_0_2[0], sim_params.Particle_vel_0_2[1],
+            sim_params.Particle_acc_0_2[0], sim_params.Particle_acc_0_2[1],
+            sim_params.Particle_sigma_2, sim_params.Particle_matrix, sim_params.Multiplication_factor
+        )
 
-    molecule_combined, Sim_position_X, Sim_position_Y, Sim_temperature = Functions.simulate(molecule_combined, Potential_field_matrix, Electric_field_matrix, Time_step, N_iterations, Num_particles_1+Num_particles_2, E_initial, screen, clock, Mesh_grid_size, Mesh_distace, Num_particles_1, Num_particles_2)
-    Functions.animate_particles(molecule_combined, Sim_position_X, Sim_position_Y,Sim_temperature, N_iterations, Mesh_grid_size, Mesh_distace, Num_particles_1, Num_particles_2)
+        # Combine molecule distributions
+        molecule_combined = Particle_distribution(
+            sim_params.Type_1, sim_params.Num_particles_1 + sim_params.Num_particles_2,
+            sim_params.Particle_pos_0_2[0], sim_params.Particle_pos_0_2[1],
+            sim_params.Particle_vel_0_2[0], sim_params.Particle_vel_0_2[1],
+            sim_params.Particle_acc_0_2[0], sim_params.Particle_acc_0_2[1],
+            sim_params.Particle_sigma_2, sim_params.Particle_matrix, sim_params.Multiplication_factor
+        )
+        molecule_combined.Multiple_molecules(molecule_1_distribution, molecule_2_distribution)
+        molecule_combined.calculate_density()
+        molecule_combined.plot_density(True, sim_params.Num_particles_1, sim_params.Num_particles_2)
 
-# Example usage
-# Sim_position_X, Sim_position_Y = simulate(Nitrogen_distribution, Potential_field_matrix, Electric_field_matrix, Time_step, N_iterations, Num_particles)
-# animate_particles(Nitrogen_distribution, Sim_position_X, Sim_position_Y, N_iterations, mesh_size, mesh_separation)
+        # Run simulation and animate particles
+        molecule_combined, Sim_position_X, Sim_position_Y, Sim_temperature = Functions.simulate(molecule_1_distribution, molecule_2_distribution,
+            molecule_combined, sim_params.Potential_field_matrix, sim_params.Electric_field_matrix,
+            sim_params.Time_step, sim_params.N_iterations, sim_params.Num_particles_1 + sim_params.Num_particles_2,
+            sim_params.E_initial, screen, clock, sim_params.Mesh_grid_size, sim_params.Mesh_distance,
+            sim_params.Num_particles_1, sim_params.Num_particles_2, sim_params.Particle_inject_0_1, sim_params.Particle_inject_0_2
+        )
+        Functions.animate_particles(
+            molecule_combined, Sim_position_X, Sim_position_Y, Sim_temperature,
+            sim_params.N_iterations, sim_params.Mesh_grid_size, sim_params.Mesh_distance,
+            sim_params.Num_particles_1, sim_params.Num_particles_2
+        )
+
+if __name__ == "__main__":
+    main()

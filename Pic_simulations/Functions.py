@@ -91,7 +91,7 @@ def Forward_step_function(Nitrogen_distribution, time_step):
     Nitrogen_distribution.X += time_step * Nitrogen_distribution.VX
     return Nitrogen_distribution
 
-def simulate(Nitrogen_distribution, Potential_field_matrix, Electric_field_matrix, Time_step, N_iterations, Num_particles, E_field, screen, clock, mesh_size, mesh_separation, num_particle_1, num_particle_2):
+def simulate(Molecule1, Molecule2, Nitrogen_distribution, Potential_field_matrix, Electric_field_matrix, Time_step, N_iterations, Num_particles, E_field, screen, clock, mesh_size, mesh_separation, num_particle_1, num_particle_2, inject_1, inject_2):
     Sim_position_X = []
     Sim_position_Y = []
     Sim_temperature = []
@@ -103,6 +103,9 @@ def simulate(Nitrogen_distribution, Potential_field_matrix, Electric_field_matri
 
     for i in range(N_iterations):
         print(f"Iteration {i+1}/{N_iterations}")
+        
+        Nitrogen_distribution.inject(inject_1, inject_2, Molecule1, Molecule2)
+
         Nitrogen_distribution.calculate_density()
         Nitrogen_distribution.Temperature_Velocity_Calc()
 
@@ -118,7 +121,7 @@ def simulate(Nitrogen_distribution, Potential_field_matrix, Electric_field_matri
         Sim_temperature.append(Nitrogen_distribution.temperature.copy())
 
         # Update Pygame screen
-        update_pygame_screen(screen, Nitrogen_distribution, mesh_size, mesh_separation, num_particle_1, num_particle_2)
+        update_pygame_screen(screen, Nitrogen_distribution, mesh_size, mesh_separation)
 
         # Print the maximum x-coordinate of the particles
         print(f"Max X: {max(Nitrogen_distribution.X)}, Max Y: {max(Nitrogen_distribution.Y)}")
@@ -131,35 +134,29 @@ def simulate(Nitrogen_distribution, Potential_field_matrix, Electric_field_matri
 
 import pygame
 
-def update_pygame_screen(screen, Nitrogen_distribution, mesh_size, mesh_separation, num_particle_1, num_particle_2):
+def update_pygame_screen(screen, Nitrogen_distribution, mesh_size, mesh_separation):
     screen.fill((0, 0, 0))  # Clear screen
 
     # Scaling factor for visualization
-    scale = 720 / (mesh_size * mesh_separation)
+    scale = 900 / (mesh_size * mesh_separation)
 
     # Draw density plot
     density = Nitrogen_distribution.density
     max_density = np.max(density)
     min_density = np.min(density)
-
+    """
     for i in range(mesh_size):
         for j in range(mesh_size):
             color_intensity = int(255 * (density[i, j] - min_density) / (max_density - min_density))
             color = (color_intensity, color_intensity, 255 - color_intensity)
             pygame.draw.rect(screen, color, pygame.Rect(int(j * scale), int(i * scale), int(scale), int(scale)))
 
-    # Draw particles
-    for idx in range(num_particle_1):
+    """
+    for idx in range(len(Nitrogen_distribution.X)):
         x = int(Nitrogen_distribution.X[idx] * scale)
         y = int(Nitrogen_distribution.Y[idx] * scale)
         if 0 <= x < screen.get_width() and 0 <= y < screen.get_height():
-            pygame.draw.circle(screen, (0, 0, 255), (x, y), 2)
-    
-    for idx in range(num_particle_1, num_particle_2 + num_particle_1):
-        x = int(Nitrogen_distribution.X[idx] * scale)
-        y = int(Nitrogen_distribution.Y[idx] * scale)
-        if 0 <= x < screen.get_width() and 0 <= y < screen.get_height():
-            pygame.draw.circle(screen, (255, 0, 0), (x, y), 2)
+            pygame.draw.circle(screen, (0, 255, 0), (x, y), 2)
 
     # Update the display
     pygame.display.flip()
