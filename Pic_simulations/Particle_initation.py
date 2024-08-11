@@ -143,31 +143,28 @@ class Particle_distribution:
 
         # Inject new particles from original_1
         for i in range(inject_1):
-            self.X = np.append(self.X, (original_1.X_0  +np.random.normal(0, original_1.sigma)*original_1.mesh_separation))
-            self.Y = np.append(self.Y, (original_1.Y_0 + +np.random.normal(0, original_1.sigma)*original_1.mesh_separation))
-            self.VX = np.append(self.VX, original_1.VX_0)
-            self.VY = np.append(self.VY, original_1.VY_0)
-            self.AX = np.append(self.AX, original_1.AX_0)
-            self.AY = np.append(self.AY, original_1.AY_0)
-            self.charge = np.append(self.charge, original_1.charge_0)
-            self.mass = np.append(self.mass, original_1.mass_0)
-            self.color_R = np.append(self.color_R, original_1.color_R)
-            self.color_G = np.append(self.color_G, original_1.color_G)
-            self.color_B = np.append(self.color_B, original_1.color_B)
+            self.X = np.append(self.X, np.array([original_1.X_0 + np.random.normal(0, original_1.sigma) * original_1.mesh_separation]))
+            self.Y = np.append(self.Y, np.array([original_1.Y_0 + np.random.normal(0, original_1.sigma) * original_1.mesh_separation]))
+            self.VX = np.append(self.VX, np.array([original_1.VX_0]))
+            self.VY = np.append(self.VY, np.array([original_1.VY_0]))
+            self.AX = np.append(self.AX, np.array([original_1.AX_0]))
+            self.AY = np.append(self.AY, np.array([original_1.AY_0]))
+            self.charge = np.append(self.charge, np.array([original_1.charge_0]))
+            self.mass = np.append(self.mass, np.array([original_1.mass_0]))
+            self.color_R = np.append(self.color_R, original_1.color_R[0])
+            self.color_G = np.append(self.color_G, original_1.color_G[0])
+            self.color_B = np.append(self.color_B, original_1.color_B[0])
 
         # Inject new particles from original_2
         for i in range(inject_2):
-            self.X = np.append(self.X, (original_2.X_0 +np.random.normal(0, original_2.sigma)*original_2.mesh_separation))
-            self.Y = np.append(self.Y, (original_2.Y_0+np.random.normal(0, original_2.sigma)*original_2.mesh_separation))
-            self.VX = np.append(self.VX, original_2.VX_0)
-            self.VY = np.append(self.VY, original_2.VY_0)
-            self.AX = np.append(self.AX, original_2.AX_0)
-            self.AY = np.append(self.AY, original_2.AY_0)
-            self.charge = np.append(self.charge, original_2.charge_0)
-            self.mass = np.append(self.mass, original_2.mass_0)
-            self.color_R = np.append(self.color_R, original_2.color_R)
-            self.color_G = np.append(self.color_G, original_2.color_G)
-            self.color_B = np.append(self.color_B, original_2.color_B)
-
-        
-        
+            self.X = np.append(self.X, np.array([original_2.X_0 + np.random.normal(0, original_2.sigma) * original_2.mesh_separation]))
+            self.Y = np.append(self.Y, np.array([original_2.Y_0 + np.random.normal(0, original_2.sigma) * original_2.mesh_separation]))
+            self.VX = np.append(self.VX, np.array([original_2.VX_0]))
+            self.VY = np.append(self.VY, np.array([original_2.VY_0]))
+            self.AX = np.append(self.AX, np.array([original_2.AX_0]))
+            self.AY = np.append(self.AY, np.array([original_2.AY_0]))
+            self.charge = np.append(self.charge, np.array([original_2.charge_0]))
+            self.mass = np.append(self.mass, np.array([original_2.mass_0]))
+            self.color_R = np.append(self.color_R, original_2.color_R[0])
+            self.color_G = np.append(self.color_G, original_2.color_G[0])
+            self.color_B = np.append(self.color_B, original_2.color_B[0])
