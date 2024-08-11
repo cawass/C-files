@@ -2,6 +2,7 @@ import numpy as np
 import scipy as sp
 import matplotlib.pyplot as plt
 import pygame
+import os
 
 from Units import electron, Nitrogen_pos, Nitrogen_neg
 from Particle_initation import Particle_distribution
@@ -18,24 +19,24 @@ class SimulationParameters:
 
         # Simulation time parameters
         self.Time_step = 1*10**(-9)
-        self.N_iterations = 1000
+        self.N_iterations = 200
 
         # Initial conditions for molecule 1
         self.Type_1 = Nitrogen_pos
-        self.Num_particles_1 = 2000
+        self.Num_particles_1 = 100
         self.Particle_sigma_1 = 0.5
         self.Particle_pos_0_1 = [0.2 * self.Mesh_grid_size * self.Mesh_distance, 0.5 * self.Mesh_grid_size * self.Mesh_distance]
-        self.Particle_vel_0_1 = [0, 0]
+        self.Particle_vel_0_1 = [200, -200]
         self.Particle_acc_0_1 = [0, 0]
         self.Particle_inject_0_1 = 2
         self.Particle_color_0_1 = (0, 0  ,255)
 
         # Initial conditions for molecule 2
         self.Type_2 = Nitrogen_neg
-        self.Num_particles_2 = 2000
+        self.Num_particles_2 = 100
         self.Particle_sigma_2 = 0.5
         self.Particle_pos_0_2 = [0.8 * self.Mesh_distance * self.Mesh_grid_size, 0.5 * self.Mesh_distance * self.Mesh_grid_size]
-        self.Particle_vel_0_2 = [0, 0]
+        self.Particle_vel_0_2 = [-200, 200]
         self.Particle_acc_0_2 = [0, 0]
         self.Particle_inject_0_2 = 2
         self.Particle_color_0_2 = (255, 0  ,0)
@@ -43,7 +44,7 @@ class SimulationParameters:
         self.Multiplication_factor = 3.125*10**15
 
         # Initial electric field
-        self.E_initial = [1*10**(-8) , 0.1*10**(-8)]
+        self.E_initial = [-1*10**(-8) , 0.1*10**(-8)*0]
 
 
         

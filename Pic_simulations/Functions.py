@@ -25,19 +25,24 @@ def simulate(Molecule1, Molecule2, Particle_distribution, Time_step, N_iteration
         Particle_distribution.calculate_density()
 
         # Calculate the acceleration and electric field matrix
-        Particle_distribution, laplacian_matrix_x, laplacian_matrix_y = Acceleration_calculation(Particle_distribution, laplacian_matrix_x, laplacian_matrix_y, E_field)
+        Particle_distribution, laplacian_matrix_x, laplacian_matrix_y, E_field_X, E_field_Y = Acceleration_calculation(Particle_distribution, laplacian_matrix_x, laplacian_matrix_y, E_field)
 
         # Update the positions of the particles
         Particle_distribution = Forward_step_function(Particle_distribution, Time_step)
 
         # Record the current simulation state
-        sim_data_storage.store_data(Particle_distribution, i)
+        sim_data_storage.store_data(Particle_distribution, i,Particle_distribution.density, laplacian_matrix_x, laplacian_matrix_y, E_field_X, E_field_Y)
 
         # Update Pygame screen for visualization
         update_pygame_screen(screen, Particle_distribution, mesh_size, mesh_separation)
 
         # Control the simulation speed
         clock.tick(30)  # Adjust the value to control the speed of the simulation
+    #This plots the final results of the simulations
+    sim_data_storage.plot_data()
+
+    #This stores the final results of the simulation for future use
+    sim_data_storage.data_storage("Simulation_01")
 
     return Particle_distribution, sim_data_storage
 
@@ -97,12 +102,12 @@ def Acceleration_calculation(Particle_distribution, laplacian_matrix_x, laplacia
     # plt.plot(E_field_matrix_X)
     # plt.show()
     
-    return Particle_distribution, laplacian_matrix_x, laplacian_matrix_y
+    return Particle_distribution, laplacian_matrix_x, laplacian_matrix_y, E_field_matrix_X, E_field_matrix_Y
 
 # Update the positions and velocities of particles in a forward step
 def Forward_step_function(Particle_distribution, time_step):
-    Particle_distribution.VX += time_step * Particle_distribution.AX * 0.5
-    Particle_distribution.VY += time_step * Particle_distribution.AY * 0.5
+    Particle_distribution.VX += time_step * Particle_distribution.AX 
+    Particle_distribution.VY += time_step * Particle_distribution.AY 
     Mesh_limit = Particle_distribution.mesh_size * Particle_distribution.mesh_separation
 
     VX = np.average(np.abs(Particle_distribution.VX))
@@ -120,16 +125,16 @@ def Forward_step_function(Particle_distribution, time_step):
     for j in range(Particle_distribution.N_particles):
         if Particle_distribution.X[j] + Particle_distribution.mesh_separation * 3 > Mesh_limit:
             Particle_distribution.X[j] = Mesh_limit - Particle_distribution.mesh_separation * 3
-            Particle_distribution.VX[j] = -Particle_distribution.VX[j] * 0.9
+            Particle_distribution.VX[j] = -Particle_distribution.VX[j]
         elif Particle_distribution.X[j] - Particle_distribution.mesh_separation * 3 < 0:
             Particle_distribution.X[j] = Particle_distribution.mesh_separation * 3
-            Particle_distribution.VX[j] = -Particle_distribution.VX[j] * 0.9
+            Particle_distribution.VX[j] = -Particle_distribution.VX[j]
         if Particle_distribution.Y[j] + Particle_distribution.mesh_separation * 3 > Mesh_limit:
             Particle_distribution.Y[j] = Mesh_limit - Particle_distribution.mesh_separation * 3
-            Particle_distribution.VY[j] = -Particle_distribution.VY[j] * 0.9
+            Particle_distribution.VY[j] = -Particle_distribution.VY[j]
         elif Particle_distribution.Y[j] - Particle_distribution.mesh_separation * 3 < 0:
             Particle_distribution.Y[j] = Particle_distribution.mesh_separation * 3
-            Particle_distribution.VY[j] = -Particle_distribution.VY[j] * 0.9
+            Particle_distribution.VY[j] = -Particle_distribution.VY[j]
 
     # Update particle positions based on velocities
     Particle_distribution.Y += time_step * Particle_distribution.VY
