@@ -20,7 +20,7 @@ class Basic_data_storage:
         self.A[:Particle_stored.N_particles,:, i] = np.stack((Particle_stored.AX, Particle_stored.AY), axis=1)
         self.density[:,:, i] = density
         self.Pot_field[:, :,:, i] = np.stack((laplacian_X, laplacian_Y))
-        self.E_field[:, :,:, i] = np.stack((E_field_X, E_field_Y))
+        #self.E_field[:, :,:, i] = np.stack((E_field_X, E_field_Y))
         
     def plot_data(self):
         # Generate subplots and plot the data

@@ -103,10 +103,6 @@ class Particle_distribution:
         
         self.density = density_grid
         
-        print("Node density (charge density):")
-        print(self.density)
-        print("Maximum density:", np.max(self.density))
-        print("Minimum density:", np.min(self.density))
 
 
     def plot_density(self, Particle_plot, num_particle_1, num_particle_2):
