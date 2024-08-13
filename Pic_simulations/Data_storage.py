@@ -20,7 +20,7 @@ class Basic_data_storage:
         self.A[:Particle_stored.N_particles,:, i] = np.stack((Particle_stored.AX, Particle_stored.AY), axis=1)
         self.density[:,:, i] = density
         self.Pot_field[:, :,:, i] = np.stack((laplacian_X, laplacian_Y))
-        #self.E_field[:, :,:, i] = np.stack((E_field_X, E_field_Y))
+        self.E_field[:, :,:, i] = np.stack((E_field_X, E_field_Y))
         
     def plot_data(self):
         # Generate subplots and plot the data
@@ -63,12 +63,25 @@ class Basic_data_storage:
         axs[1, 1].set_title('Potential Field (X-axis) at Last Time Step')
         fig.colorbar(im2, ax=axs[1, 1])
 
-        im3 = axs[1, 2].imshow(self.E_field[0, :, :, -1], aspect='auto', cmap='viridis')
-        axs[1, 2].set_title('Electric Field (X-axis) at Last Time Step')
-        fig.colorbar(im3, ax=axs[1, 2])
+        # Assuming you want to plot the vector field at the last time step:
+        E_field_X = self.E_field[0, :, :, -1]  # X-component of the electric field
+        E_field_Y = self.E_field[1, :, :, -1]  # Y-component of the electric field
+
+        # Create a grid of coordinates corresponding to the E field components
+        Y, X = np.meshgrid(np.arange(E_field_X.shape[0]), np.arange(E_field_X.shape[1]))
+
+        # Plot the vector field using quiver
+        fig, axs = plt.subplots(2, 3, figsize=(12, 8))
+        im3 = axs[1, 2].quiver(X, Y, E_field_X, E_field_Y, cmap='viridis')
+        axs[1, 2].set_title('Electric Field Vector (X and Y components) at Last Time Step')
+
+        # Add a color bar to indicate the magnitude of the field
+        magnitude = np.sqrt(E_field_X**2 + E_field_Y**2)
+        fig.colorbar(axs[1, 2].imshow(magnitude, aspect='auto', cmap='viridis'), ax=axs[1, 2])
 
         plt.tight_layout()
-        return fig  # Return the figure object
+        return fig 
+     # Return the figure object
     def data_storage(self, simulation_name):
         # Create a directory for the simulation
         if not os.path.exists(simulation_name):

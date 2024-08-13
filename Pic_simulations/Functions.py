@@ -36,7 +36,7 @@ def simulate(Molecule1, Molecule2, Particle_distribution, Time_step, N_iteration
         # Record the current simulation state
         sim_data_storage.store_data(Particle_distribution, i,Particle_distribution.density, laplacian_matrix_x, laplacian_matrix_y, E_field_X, E_field_Y)
 
-        # Update Pygame screen for visualization
+        # Update Pygame screen for visualiz.ation
         screen_images = update_pygame_screen(screen, Particle_distribution, mesh_size, mesh_separation, False, screen_images)
 
     #This plots the final results of the simulations
@@ -49,8 +49,7 @@ def simulate(Molecule1, Molecule2, Particle_distribution, Time_step, N_iteration
     return Particle_distribution, sim_data_storage
 
 
-
-def Gauss_Seidel_2D(phi, mesh_separation, density, mesh_size, max_iterations=100000, tolerance=1e-1):
+def Gauss_Seidel_2D(phi, mesh_separation, density, mesh_size, max_iterations=100000, tolerance=1*10**(-5)):
     # Precompute constants
     idx2 = 1.0 / (mesh_separation ** 2)
     idy2 = 1.0 / (mesh_separation ** 2)
@@ -68,7 +67,7 @@ def Gauss_Seidel_2D(phi, mesh_separation, density, mesh_size, max_iterations=100
         )
 
         # Successive Over-Relaxation (SOR) with relaxation factor 1.4
-        phi_new[1:-1, 1:-1] = phi[1:-1, 1:-1] + 0.5 * (phi_new[1:-1, 1:-1] - phi[1:-1, 1:-1])
+        phi_new[1:-1, 1:-1] = phi[1:-1, 1:-1] + 1 * (phi_new[1:-1, 1:-1] - phi[1:-1, 1:-1])
         
         # Check for convergence every 25 iterations
         if iteration % 25 == 0:
@@ -87,10 +86,10 @@ def Gauss_Seidel_2D(phi, mesh_separation, density, mesh_size, max_iterations=100
         phi = phi_new
     
     print(f"Max iterations reached with L2 norm = {L2:.2e}")
-    return phi
-
+    return phi 
 
 def computeEF_2D(phi, mesh_separation):
+    """
     # Extract grid spacing in each direction
     dx = mesh_separation
     dy = mesh_separation
@@ -105,38 +104,55 @@ def computeEF_2D(phi, mesh_separation):
         for j in range(nj):
             # x component
             if i == 0:  # forward difference
-                ef_x[i, j] = -( -3 * phi[i, j] + 4 * phi[i + 1, j] - phi[i + 2, j] ) / (2 * dx)
+                ef_x[i, j] = -(phi[i + 1, j] - phi[i, j]) / dx
             elif i == ni - 1:  # backward difference
-                ef_x[i, j] = -( phi[i - 2, j] - 4 * phi[i - 1, j] + 3 * phi[i, j] ) / (2 * dx)
+                ef_x[i, j] = -(phi[i, j] - phi[i - 1, j]) / dx
             else:  # central difference
-                ef_x[i, j] = -( phi[i + 1, j] - phi[i - 1, j] ) / (2 * dx)
+                ef_x[i, j] = -(phi[i + 1, j] - phi[i - 1, j]) / (2 * dx)
 
             # y component
             if j == 0:  # forward difference
-                ef_y[i, j] = -( -3 * phi[i, j] + 4 * phi[i, j + 1] - phi[i, j + 2] ) / (2 * dy)
+                ef_y[i, j] = (phi[i, j + 1] - phi[i, j]) / dy
             elif j == nj - 1:  # backward difference
-                ef_y[i, j] = -( phi[i, j - 2] - 4 * phi[i, j - 1] + 3 * phi[i, j] ) / (2 * dy)
+                ef_y[i, j] = (phi[i, j] - phi[i, j - 1]) / dy
             else:  # central difference
-                ef_y[i, j] = -( phi[i, j + 1] - phi[i, j - 1] ) / (2 * dy)
+                ef_y[i, j] = (phi[i, j + 1] - phi[i, j - 1]) / (2 * dy)
 
     # Combine into a single 2D vector field
-    return ef_x, ef_y
+    return ef_x, ef_y"""
+    return np.gradient(-phi)
+def gather_2d(lx, ly, E_field):
+    # Get the integer parts
+    ix, iy = int(lx), int(ly)
+    
+    # Get the fractional parts
+    dx, dy = lx - ix, ly - iy
+    
+    # Perform bilinear interpolation
+    E_interp = (1 - dx) * (1 - dy) * E_field[iy, ix] + \
+                dx * (1 - dy) * E_field[iy, ix + 1] + \
+               (1 - dx) * dy * E_field[iy + 1, ix] + \
+                dx * dy * E_field[iy + 1, ix + 1]
+    
+    return E_interp
+    
 
 def Acceleration_calculation(Particle_distribution, laplacian_matrix_x, laplacian_matrix_y, E_field):
-
+    
     # Solve for Laplacian matrices using Gauss-Seidel method
-    laplacian_matrix = Gauss_Seidel_2D(laplacian_matrix_x, Particle_distribution.mesh_separation, Particle_distribution.density, Particle_distribution.mesh_size)
-
+    laplacian_matrix = Gauss_Seidel_2D(laplacian_matrix_x, Particle_distribution.mesh_separation, 
+                                       Particle_distribution.density, Particle_distribution.mesh_size)
     # Initialize electric field matrices
     E_field_X, E_field_Y = computeEF_2D(laplacian_matrix, Particle_distribution.mesh_separation)
-
+    print(np.min(E_field_X))
     # Initialize arrays for particle-specific electric fields and accelerations
-    E_field_particle_X = np.zeros(Particle_distribution.N_particles)
-    E_field_particle_Y = np.zeros(Particle_distribution.N_particles)
     Particle_distribution.AX = np.zeros(Particle_distribution.N_particles)
     Particle_distribution.AY = np.zeros(Particle_distribution.N_particles)
 
     # Assign electric field values to particles and calculate accelerations
+
+    E_field_particle_X = np.zeros(Particle_distribution.N_particles)
+    E_field_particle_Y = np.zeros(Particle_distribution.N_particles)
     for j in range(Particle_distribution.N_particles):
         closest_x_index = int(Particle_distribution.X[j] // Particle_distribution.mesh_separation)
         closest_y_index = int(Particle_distribution.Y[j] // Particle_distribution.mesh_separation)
@@ -145,17 +161,17 @@ def Acceleration_calculation(Particle_distribution, laplacian_matrix_x, laplacia
         closest_x_index = np.clip(closest_x_index, 0,  Particle_distribution.mesh_size - 1)
         closest_y_index = np.clip(closest_y_index, 0,  Particle_distribution.mesh_size - 1)
         
-        E_field_particle_X[j] = E_field_X[closest_y_index, closest_x_index]
-        E_field_particle_Y[j] = E_field_Y[closest_y_index, closest_x_index]
+        
+        E_field_particle_X[j] = E_field_X[closest_x_index, closest_y_index]
+        E_field_particle_Y[j] = E_field_Y[closest_x_index, closest_y_index]
 
         # Correct sign in the acceleration calculation
-        Particle_distribution.AX[j] = E_field_particle_X[j] * (Particle_distribution.charge[j]) / (Particle_distribution.mass[j])*10
-        Particle_distribution.AY[j] = E_field_particle_Y[j] * (Particle_distribution.charge[j]) / (Particle_distribution.mass[j])*0
+        Particle_distribution.AX[j] = E_field_particle_X[j] * (Particle_distribution.charge[j]) / (Particle_distribution.mass[j])*1
+        Particle_distribution.AY[j] = E_field_particle_Y[j] * (Particle_distribution.charge[j]) / (Particle_distribution.mass[j])*1
+        # Create a grid of coordinates corresponding to the E field components
 
-    # Optional: Plot the electric field matrix for debugging
 
-    return Particle_distribution, laplacian_matrix, laplacian_matrix_y, E_field[0],  E_field[1]
-# Update the positions and velocities of particles in a forward step
+    return Particle_distribution, laplacian_matrix, laplacian_matrix_y, E_field_X, E_field_Y
 def Forward_step_function(Particle_distribution, time_step):
     Particle_distribution.VX += time_step * Particle_distribution.AX 
     Particle_distribution.VY += time_step * Particle_distribution.AY 
@@ -192,8 +208,6 @@ def Forward_step_function(Particle_distribution, time_step):
     Particle_distribution.X += time_step * Particle_distribution.VX
     
     return Particle_distribution
-
-
 
 def update_pygame_screen(screen, Particle_distribution, mesh_size, mesh_separation, plot, screen_images):
     # Initialize a list to store screen images
