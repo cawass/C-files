@@ -44,12 +44,12 @@ def simulate(Molecule1, Molecule2, Particle_distribution, Time_step, N_iteration
     sim_data_storage.plot_data()
 
     #This stores the final results of the simulation for future use
-    sim_data_storage.data_storage("Simulation_09")
+    sim_data_storage.data_storage("Simulation_10")
 
     return Particle_distribution, sim_data_storage
 
 
-def Gauss_Seidel_2D(phi, mesh_separation, density, mesh_size, max_iterations=100000, tolerance=1*10**(-5)):
+def Gauss_Seidel_2D(phi, mesh_separation, density, mesh_size, max_iterations=100000, tolerance=10**(-6)):
     # Precompute constants
     idx2 = 1.0 / (mesh_separation ** 2)
     idy2 = 1.0 / (mesh_separation ** 2)
@@ -89,88 +89,96 @@ def Gauss_Seidel_2D(phi, mesh_separation, density, mesh_size, max_iterations=100
     return phi 
 
 def computeEF_2D(phi, mesh_separation):
-    """
-    # Extract grid spacing in each direction
-    dx = mesh_separation
-    dy = mesh_separation
-    
-    # Initialize the electric field arrays (ef_x, ef_y) with the same shape as phi
-    ef_x = np.zeros_like(phi)
-    ef_y = np.zeros_like(phi)
-    
-    ni, nj = phi.shape
-    
-    for i in range(ni):
-        for j in range(nj):
-            # x component
-            if i == 0:  # forward difference
-                ef_x[i, j] = -(phi[i + 1, j] - phi[i, j]) / dx
-            elif i == ni - 1:  # backward difference
-                ef_x[i, j] = -(phi[i, j] - phi[i - 1, j]) / dx
-            else:  # central difference
-                ef_x[i, j] = -(phi[i + 1, j] - phi[i - 1, j]) / (2 * dx)
-
-            # y component
-            if j == 0:  # forward difference
-                ef_y[i, j] = (phi[i, j + 1] - phi[i, j]) / dy
-            elif j == nj - 1:  # backward difference
-                ef_y[i, j] = (phi[i, j] - phi[i, j - 1]) / dy
-            else:  # central difference
-                ef_y[i, j] = (phi[i, j + 1] - phi[i, j - 1]) / (2 * dy)
-
-    # Combine into a single 2D vector field
-    return ef_x, ef_y"""
-    return np.gradient(-phi)
-def gather_2d(lx, ly, E_field):
-    # Get the integer parts
-    ix, iy = int(lx), int(ly)
-    
-    # Get the fractional parts
-    dx, dy = lx - ix, ly - iy
-    
-    # Perform bilinear interpolation
-    E_interp = (1 - dx) * (1 - dy) * E_field[iy, ix] + \
-                dx * (1 - dy) * E_field[iy, ix + 1] + \
-               (1 - dx) * dy * E_field[iy + 1, ix] + \
-                dx * dy * E_field[iy + 1, ix + 1]
-    
-    return E_interp
-    
+    return np.gradient(-phi, mesh_separation)
 
 def Acceleration_calculation(Particle_distribution, laplacian_matrix_x, laplacian_matrix_y, E_field):
     
     # Solve for Laplacian matrices using Gauss-Seidel method
     laplacian_matrix = Gauss_Seidel_2D(laplacian_matrix_x, Particle_distribution.mesh_separation, 
                                        Particle_distribution.density, Particle_distribution.mesh_size)
+    
     # Initialize electric field matrices
-    E_field_X, E_field_Y = computeEF_2D(laplacian_matrix, Particle_distribution.mesh_separation)
+    E_field_Y, E_field_X = computeEF_2D(laplacian_matrix, Particle_distribution.mesh_separation)
     print(np.min(E_field_X))
+
+    E_field_Y = E_field_Y
+    E_field_X = E_field_X
+
     # Initialize arrays for particle-specific electric fields and accelerations
     Particle_distribution.AX = np.zeros(Particle_distribution.N_particles)
     Particle_distribution.AY = np.zeros(Particle_distribution.N_particles)
 
     # Assign electric field values to particles and calculate accelerations
-
+    #plt.scatter(Particle_distribution.X, Particle_distribution.Y)
+    #plt.contour(E_field_Y)
+    #plt.show()
+    # Initialize arrays for particle-specific electric fields and accelerations
     E_field_particle_X = np.zeros(Particle_distribution.N_particles)
     E_field_particle_Y = np.zeros(Particle_distribution.N_particles)
+    Particle_distribution.AX = np.zeros(Particle_distribution.N_particles)
+    Particle_distribution.AY = np.zeros(Particle_distribution.N_particles)
+    # Assign electric field values to particles and calculate accelerations
     for j in range(Particle_distribution.N_particles):
         closest_x_index = int(Particle_distribution.X[j] // Particle_distribution.mesh_separation)
         closest_y_index = int(Particle_distribution.Y[j] // Particle_distribution.mesh_separation)
-
-        # Ensure indices are within bounds
-        closest_x_index = np.clip(closest_x_index, 0,  Particle_distribution.mesh_size - 1)
-        closest_y_index = np.clip(closest_y_index, 0,  Particle_distribution.mesh_size - 1)
+        closest_x_index = np.clip(closest_x_index, 0, Particle_distribution.mesh_size - 1)
+        closest_y_index = np.clip(closest_y_index, 0, Particle_distribution.mesh_size - 1)
         
-        
-        E_field_particle_X[j] = E_field_X[closest_x_index, closest_y_index]
-        E_field_particle_Y[j] = E_field_Y[closest_x_index, closest_y_index]
-
+        E_field_particle_X[j] = E_field_X[closest_y_index, closest_x_index]
+        E_field_particle_Y[j] = E_field_Y[closest_y_index, closest_x_index]
         # Correct sign in the acceleration calculation
-        Particle_distribution.AX[j] = E_field_particle_X[j] * (Particle_distribution.charge[j]) / (Particle_distribution.mass[j])*1
-        Particle_distribution.AY[j] = E_field_particle_Y[j] * (Particle_distribution.charge[j]) / (Particle_distribution.mass[j])*1
-        # Create a grid of coordinates corresponding to the E field components
+        Particle_distribution.AX[j] = E_field_particle_X[j] * (Particle_distribution.charge[j]) / (Particle_distribution.mass[j])
+        Particle_distribution.AY[j] = E_field_particle_Y[j] * (Particle_distribution.charge[j]) / (Particle_distribution.mass[j])
+    """
+    heatmap_ax, xedges, yedges = np.histogram2d(
+        Particle_distribution.X, 
+        Particle_distribution.Y, 
+        bins=Particle_distribution.mesh_size, 
+        range=[[0, Particle_distribution.mesh_size * Particle_distribution.mesh_separation],
+               [0, Particle_distribution.mesh_size * Particle_distribution.mesh_separation]],
+        weights=Particle_distribution.AX
+    )
 
+    heatmap_ay, _, _ = np.histogram2d(
+        Particle_distribution.X, 
+        Particle_distribution.Y, 
+        bins=Particle_distribution.mesh_size, 
+        range=[[0, Particle_distribution.mesh_size * Particle_distribution.mesh_separation],
+               [0, Particle_distribution.mesh_size * Particle_distribution.mesh_separation]],
+        weights=Particle_distribution.AY
+    )
 
+    # Normalize by the number of particles in each bin to get the average acceleration in each bin
+    particle_count, _, _ = np.histogram2d(
+        Particle_distribution.X, 
+        Particle_distribution.Y, 
+        bins=Particle_distribution.mesh_size, 
+        range=[[0, Particle_distribution.mesh_size * Particle_distribution.mesh_separation],
+               [0, Particle_distribution.mesh_size * Particle_distribution.mesh_separation]]
+    )
+
+    # Avoid division by zero
+    heatmap_ax = np.divide(heatmap_ax, particle_count, out=np.zeros_like(heatmap_ax), where=particle_count!=0)
+    heatmap_ay = np.divide(heatmap_ay, particle_count, out=np.zeros_like(heatmap_ay), where=particle_count!=0)
+
+    # Plotting the heatmap for AX
+    plt.figure(figsize=(10, 8))
+    plt.imshow(heatmap_ax.T, origin='lower', extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], cmap='viridis')
+    plt.colorbar(label='Acceleration X Component')
+    plt.title('Heat Map of Acceleration X Component')
+    plt.xlabel('X Position')
+    plt.ylabel('Y Position')
+    plt.show()
+
+    # Plotting the heatmap for AY
+    plt.figure(figsize=(10, 8))
+    plt.imshow(heatmap_ay.T, origin='lower', extent=[xedges[0], xedges[-1], yedges[0], yedges[-1]], cmap='viridis')
+    plt.colorbar(label='Acceleration Y Component')
+    plt.title('Heat Map of Acceleration Y Component')
+    plt.xlabel('X Position')
+    plt.ylabel('Y Position')
+    plt.show()
+"""
     return Particle_distribution, laplacian_matrix, laplacian_matrix_y, E_field_X, E_field_Y
 def Forward_step_function(Particle_distribution, time_step):
     Particle_distribution.VX += time_step * Particle_distribution.AX 
@@ -181,13 +189,14 @@ def Forward_step_function(Particle_distribution, time_step):
     VY = np.average(np.abs(Particle_distribution.VY))
 
     # Check for high velocities and reset if needed
+    """
     for j in range(Particle_distribution.N_particles):
         if np.abs(Particle_distribution.VX[j]) > 10 * VX or np.abs(Particle_distribution.VY[j]) > 10 * VY:
             Particle_distribution.VX[j] = 0
             Particle_distribution.VY[j] = 0
             Particle_distribution.X[j] = 0
             Particle_distribution.Y[j] = 0
-
+    """
     # Reflect particles at the boundaries
     for j in range(Particle_distribution.N_particles):
         if Particle_distribution.X[j] + Particle_distribution.mesh_separation * 3 > Mesh_limit:

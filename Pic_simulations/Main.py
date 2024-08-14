@@ -15,27 +15,27 @@ class SimulationParameters:
     def __init__(self):
         # Simulation position parameters
         self.Mesh_grid_size = 100
-        self.Mesh_distance = 1
+        self.Mesh_distance = 1*10**(-6)
 
         # Simulation time parameters
-        self.Time_step = 1*10**(-8)
-        self.N_iterations = 20
+        self.Time_step = 5*10**(-9)
+        self.N_iterations = 1
 
         # Initial conditions for molecule 1
-        self.Type_1 = Nitrogen_neg
-        self.Num_particles_1 = 100
-        self.Particle_sigma_1 = 1
-        self.Particle_pos_0_1 = [0.18 * self.Mesh_grid_size * self.Mesh_distance, 0.2 * self.Mesh_grid_size * self.Mesh_distance]
+        self.Type_1 = Nitrogen_pos
+        self.Num_particles_1 = 10
+        self.Particle_sigma_1 = 5
+        self.Particle_pos_0_1 = [0.5* self.Mesh_grid_size * self.Mesh_distance, 0.5 * self.Mesh_grid_size * self.Mesh_distance]
         self.Particle_vel_0_1 = [0, 0]
         self.Particle_acc_0_1 = [0, 0]
         self.Particle_inject_0_1 = 0
         self.Particle_color_0_1 = (0, 0  ,255)
 
         # Initial conditions for molecule 2
-        self.Type_2 = Nitrogen_neg
+        self.Type_2 = Nitrogen_pos
         self.Num_particles_2 = 0
-        self.Particle_sigma_2 = 0.0001
-        self.Particle_pos_0_2 = [0.18 * self.Mesh_distance * self.Mesh_grid_size, 0.22 * self.Mesh_distance * self.Mesh_grid_size]
+        self.Particle_sigma_2 = 1
+        self.Particle_pos_0_2 = [0.8 * self.Mesh_distance * self.Mesh_grid_size, 0.42 * self.Mesh_distance * self.Mesh_grid_size]
         self.Particle_vel_0_2 = [0, 0]
         self.Particle_acc_0_2 = [0, 0]
         self.Particle_inject_0_2 = 0
